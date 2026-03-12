@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Sound – Admin Console</title>
+<style>
+/* ═══════════════════════ CSS VARIABLES / RESET ═══════════════════════════ */
+:root {
+  --bg:      #121212;
+  --surface: #1E1E1E;
+  --panel:   #282828;
+  --text:    #FFFFFF;
+  --sub:     #B3B3B3;
+  --accent:  #1DB954;
+  --accent2: #1ED760;
+  --danger:  #E74C3C;
+  --warn:    #F39C12;
+  --radius:  10px;
+  --trans:   0.2s ease;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;
+     display:flex;height:100vh;overflow:hidden;font-size:14px}
+
+/* ═══════════════════════ SIDEBAR ═════════════════════════════════════════ */
+#sidebar{width:220px;background:var(--surface);display:flex;flex-direction:column;
+         border-right:1px solid #333;flex-shrink:0}
+#sidebar .logo{padding:24px 20px 16px;display:flex;align-items:center;gap:10px;
+               border-bottom:1px solid #333}
+#sidebar .logo span{font-size:20px;font-weight:700;color:var(--accent);letter-spacing:-0.5px}
+#sidebar .logo small{display:block;font-size:10px;color:var(--sub);font-weight:400}
+nav{flex:1;overflow-y:auto;padding:8px 0}
+nav a{display:flex;align-items:center;gap:12px;padding:11px 20px;color:var(--sub);
+      text-decoration:none;transition:var(--trans);cursor:pointer;font-size:13px;
+      border-left:3px solid transparent}
+nav a:hover{color:var(--text);background:rgba(255,255,255,.05)}
+nav a.active{color:var(--accent);background:rgba(29,185,84,.08);border-left-color:var(--accent)}
+nav a .icon{font-size:16px;width:20px;text-align:center}
+.sidebar-footer{padding:16px 20px;border-top:1px solid #333;color:var(--sub);font-size:11px}
+
+/* ═══════════════════════ MAIN CONTENT ════════════════════════════════════ */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* ─ top bar ─ */
+#topbar{height:56px;background:var(--surface);border-bottom:1px solid #333;
+        display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0}
+#topbar h2{font-size:16px;font-weight:600;flex:1}
+.badge{background:var(--accent);color:#000;font-size:10px;font-weight:700;
+       padding:2px 7px;border-radius:20px}
+.btn{background:var(--accent);color:#000;border:none;padding:7px 16px;border-radius:6px;
+     cursor:pointer;font-weight:600;font-size:13px;transition:var(--trans)}
+.btn:hover{background:var(--accent2)}
+.btn.secondary{background:var(--panel);color:var(--text);border:1px solid #444}
+.btn.secondary:hover{background:#333}
+.btn.danger{background:var(--danger);color:#fff}
+.btn.sm{padding:4px 10px;font-size:12px}
+
+/* ─ pages ─ */
+#pages{flex:1;overflow:hidden}
+.page{display:none;height:100%;overflow-y:auto;padding:24px}
+.page.active{display:block}
+
+/* ═══════════════════════ PLAYER BAR ══════════════════════════════════════ */
+#playerbar{height:82px;background:var(--surface);border-top:1px solid #333;
+           display:flex;align-items:center;padding:0 24px;gap:20px;flex-shrink:0}
+.pb-art{width:52px;height:52px;background:var(--panel);border-radius:6px;
+        display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.pb-info{min-width:180px}
+.pb-info .title{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pb-info .artist{color:var(--sub);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pb-controls{display:flex;align-items:center;gap:12px}
+.pb-controls button{background:none;border:none;color:var(--text);cursor:pointer;
+                    font-size:20px;transition:var(--trans);padding:4px}
+.pb-controls button:hover{color:var(--accent)}
+.pb-controls button.play-btn{background:var(--accent);color:#000;border-radius:50%;
+                              width:38px;height:38px;font-size:16px;display:flex;
+                              align-items:center;justify-content:center}
+.pb-controls button.play-btn:hover{background:var(--accent2);transform:scale(1.05)}
+.pb-timeline{flex:1;display:flex;align-items:center;gap:10px}
+.pb-timeline .time{color:var(--sub);font-size:11px;width:36px;text-align:center;flex-shrink:0}
+.pb-seek{flex:1;height:4px;background:#444;border-radius:2px;position:relative;cursor:pointer}
+.pb-seek-fill{height:100%;background:var(--accent);border-radius:2px;pointer-events:none}
+.pb-seek:hover{height:6px}
+.pb-vol{display:flex;align-items:center;gap:8px}
+.pb-vol .vol-icon{color:var(--sub);font-size:16px;cursor:pointer}
+input[type=range].vol-slider{width:80px;accent-color:var(--accent);cursor:pointer}
+
+/* ═══════════════════════ LIBRARY PAGE ════════════════════════════════════ */
+.upload-zone{border:2px dashed #444;border-radius:var(--radius);padding:36px;
+             text-align:center;cursor:pointer;transition:var(--trans);margin-bottom:20px}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:rgba(29,185,84,.06)}
+.upload-zone .up-icon{font-size:36px;margin-bottom:8px}
+.upload-zone p{color:var(--sub);font-size:13px}
+.track-table{width:100%;border-collapse:collapse}
+.track-table th{text-align:left;padding:8px 12px;color:var(--sub);font-size:11px;
+                text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #333;
+                font-weight:600}
+.track-table td{padding:10px 12px;border-bottom:1px solid #2a2a2a;vertical-align:middle}
+.track-table tr:hover td{background:rgba(255,255,255,.03)}
+.track-table .num{color:var(--sub);width:32px;font-size:12px}
+.track-table .track-title{font-weight:500}
+.track-table .track-meta{color:var(--sub);font-size:12px}
+.track-table .track-dur{color:var(--sub);font-size:12px;text-align:right}
+.format-badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;
+              background:rgba(29,185,84,.15);color:var(--accent)}
+.tag-pill{font-size:10px;padding:2px 7px;border-radius:12px;background:#333;
+          color:var(--sub);display:inline-block;margin:1px}
+.actions-col{display:flex;gap:6px;justify-content:flex-end}
+
+/* ═══════════════════════ META EDITOR ═════════════════════════════════════ */
+.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.field-group{display:flex;flex-direction:column;gap:6px}
+.field-group label{color:var(--sub);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.field-group input,.field-group textarea,.field-group select{
+  background:var(--panel);border:1px solid #444;color:var(--text);
+  padding:9px 12px;border-radius:6px;font-size:13px;transition:var(--trans);
+  font-family:inherit}
+.field-group input:focus,.field-group textarea:focus{outline:none;border-color:var(--accent)}
+.meta-preview{background:var(--panel);border-radius:var(--radius);padding:20px;
+              display:flex;gap:20px;margin-bottom:20px}
+.meta-art{width:80px;height:80px;background:#333;border-radius:8px;
+          display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0}
+
+/* ═══════════════════════ EQ PAGE ══════════════════════════════════════════ */
+.eq-container{display:flex;flex-direction:column;gap:24px}
+.eq-bands{display:flex;align-items:flex-end;gap:8px;height:180px;
+          background:var(--panel);border-radius:var(--radius);padding:20px;
+          justify-content:space-around}
+.eq-band{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1}
+.eq-band label{color:var(--sub);font-size:10px;white-space:nowrap}
+.eq-band .val{color:var(--accent);font-size:11px;font-weight:700;min-width:30px;text-align:center}
+input[type=range].eq-slider{writing-mode:vertical-lr;direction:rtl;
+  width:28px;height:100px;accent-color:var(--accent);cursor:pointer}
+.eq-presets{display:flex;gap:8px;flex-wrap:wrap}
+.preset-btn{background:var(--panel);border:1px solid #444;color:var(--text);
+            padding:7px 14px;border-radius:20px;cursor:pointer;font-size:12px;transition:var(--trans)}
+.preset-btn:hover,.preset-btn.active{background:var(--accent);color:#000;border-color:var(--accent)}
+
+/* ═══════════════════════ WAVEFORM ═════════════════════════════════════════ */
+#waveform-canvas{width:100%;height:100px;background:var(--panel);border-radius:var(--radius);display:block}
+.waveform-wrap{position:relative;margin:16px 0}
+.wf-playhead{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);
+             pointer-events:none;transition:left .1s linear}
+
+/* ═══════════════════════ SPECTRUM ═════════════════════════════════════════ */
+#spectrum-canvas{width:100%;height:160px;background:var(--panel);border-radius:var(--radius);display:block}
+
+/* ═══════════════════════ PLUGINS PAGE ════════════════════════════════════ */
+.plugin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.plugin-card{background:var(--panel);border-radius:var(--radius);padding:18px;
+             border:1px solid #333;transition:var(--trans)}
+.plugin-card:hover{border-color:#555}
+.plugin-card.enabled{border-color:var(--accent);background:rgba(29,185,84,.06)}
+.plugin-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.plugin-icon{font-size:24px}
+.plugin-name{font-weight:600;font-size:14px}
+.plugin-desc{color:var(--sub);font-size:12px;margin-bottom:14px;line-height:1.5}
+.plugin-params{margin-bottom:14px}
+.plugin-params .param-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.plugin-params .param-row label{color:var(--sub);font-size:11px;min-width:80px}
+.plugin-params .param-row input[type=range]{flex:1;accent-color:var(--accent)}
+.plugin-params .param-row .pv{color:var(--accent);font-size:11px;width:32px;text-align:right}
+.toggle{position:relative;display:inline-block;width:44px;height:24px}
+.toggle input{opacity:0;width:0;height:0}
+.slider-tog{position:absolute;inset:0;background:#444;border-radius:12px;cursor:pointer;transition:var(--trans)}
+.slider-tog:before{content:"";position:absolute;height:18px;width:18px;left:3px;bottom:3px;
+                   background:#fff;border-radius:50%;transition:var(--trans)}
+input:checked + .slider-tog{background:var(--accent)}
+input:checked + .slider-tog:before{transform:translateX(20px)}
+
+/* ═══════════════════════ THEMES PAGE ════════════════════════════════════ */
+.theme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+.theme-card{border-radius:var(--radius);overflow:hidden;cursor:pointer;
+            border:2px solid transparent;transition:var(--trans)}
+.theme-card:hover{transform:scale(1.02)}
+.theme-card.active{border-color:var(--accent)}
+.theme-preview{height:80px;display:flex;align-items:center;justify-content:center}
+.theme-footer{padding:10px 12px;display:flex;align-items:center;justify-content:space-between}
+.theme-footer .name{font-size:13px;font-weight:600}
+.theme-dot{width:12px;height:12px;border-radius:50%}
+
+/* ═══════════════════════ BUILD / ADMIN ════════════════════════════════════ */
+.build-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+.build-card{background:var(--panel);border-radius:var(--radius);padding:24px;border:1px solid #333}
+.build-card h3{font-size:15px;margin-bottom:6px}
+.build-card p{color:var(--sub);font-size:13px;margin-bottom:16px}
+.console-output{background:#0a0a0a;border-radius:var(--radius);padding:16px;
+                font-family:'Courier New',monospace;font-size:12px;height:240px;
+                overflow-y:auto;border:1px solid #222}
+.console-output .log{padding:2px 0;line-height:1.6}
+.console-output .ok{color:var(--accent)}
+.console-output .info{color:#60a5fa}
+.console-output .warn{color:var(--warn)}
+.console-output .error{color:var(--danger)}
+.log-time{color:#555;margin-right:8px;font-size:11px}
+
+/* ═══════════════════════ STATS CARDS ═════════════════════════════════════ */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--panel);border-radius:var(--radius);padding:18px}
+.stat-card .s-val{font-size:28px;font-weight:700;color:var(--accent);line-height:1}
+.stat-card .s-lbl{color:var(--sub);font-size:12px;margin-top:4px}
+
+/* ═══════════════════════ NOTIFICATIONS ════════════════════════════════════ */
+#toast-container{position:fixed;bottom:100px;right:20px;z-index:9999;
+                 display:flex;flex-direction:column;gap:8px}
+.toast{background:#333;color:#fff;padding:10px 16px;border-radius:8px;
+       font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,.4);
+       animation:slideIn .3s ease;border-left:3px solid var(--accent);max-width:320px}
+.toast.error{border-left-color:var(--danger)}
+.toast.warn{border-left-color:var(--warn)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ═══════════════════════ LOADING ══════════════════════════════════════════ */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid #444;
+         border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ─ misc ─ */
+.divider{height:1px;background:#333;margin:20px 0}
+.empty-state{text-align:center;padding:60px 20px;color:var(--sub)}
+.empty-state .e-icon{font-size:48px;margin-bottom:12px}
+.section-title{font-size:13px;font-weight:700;text-transform:uppercase;
+               letter-spacing:.6px;color:var(--sub);margin-bottom:14px}
+.flex-row{display:flex;align-items:center;gap:12px}
+.ml-auto{margin-left:auto}
+select.styled{background:var(--panel);border:1px solid #444;color:var(--text);
+              padding:7px 10px;border-radius:6px;font-size:13px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ SIDEBAR ═══════════════════════════════════════ -->
+<div id="sidebar">
+  <div class="logo">
+    <span>🎵</span>
+    <div><span>PROJECT SOUND</span><small>Admin Console v2.0</small></div>
+  </div>
+  <nav>
+    <a href="#" class="active" onclick="showPage('dashboard',this)">
+      <span class="icon">📊</span> Dashboard
+    </a>
+    <a href="#" onclick="showPage('library',this)">
+      <span class="icon">🎵</span> Library
+    </a>
+    <a href="#" onclick="showPage('player',this)">
+      <span class="icon">▶️</span> Now Playing
+    </a>
+    <a href="#" onclick="showPage('metadata',this)">
+      <span class="icon">🏷️</span> Metadata Editor
+    </a>
+    <a href="#" onclick="showPage('equalizer',this)">
+      <span class="icon">🎚️</span> EQ & Effects
+    </a>
+    <a href="#" onclick="showPage('plugins',this)">
+      <span class="icon">🔌</span> Plugins
+    </a>
+    <a href="#" onclick="showPage('themes',this)">
+      <span class="icon">🎨</span> Themes
+    </a>
+    <a href="#" onclick="showPage('build',this)">
+      <span class="icon">🔨</span> Build Console
+    </a>
+    <a href="#" onclick="showPage('roadmap',this)">
+      <span class="icon">🗺️</span> Roadmap
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    Created by Navajeevan Panthi<br>Project Sound © 2025
+  </div>
+</div>
+
+<!-- ═══════════════════════ MAIN ══════════════════════════════════════════ -->
+<div id="main">
+  <!-- top bar -->
+  <div id="topbar">
+    <h2 id="page-title">Dashboard</h2>
+    <span id="topbar-meta" style="color:var(--sub);font-size:12px"></span>
+    <div style="display:flex;gap:8px" id="topbar-actions"></div>
+  </div>
+
+  <!-- pages -->
+  <div id="pages">
+
+    <!-- ── DASHBOARD ─────────────────────────────────────────────────────── -->
+    <div class="page active" id="page-dashboard">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="s-val" id="stat-tracks">0</div>
+          <div class="s-lbl">Tracks in Library</div>
+        </div>
+        <div class="stat-card">
+          <div class="s-val" id="stat-plugins">0</div>
+          <div class="s-lbl">Plugins Loaded</div>
+        </div>
+        <div class="stat-card">
+          <div class="s-val" id="stat-formats">0</div>
+          <div class="s-lbl">Formats Supported</div>
+        </div>
+        <div class="stat-card">
+          <div class="s-val" id="stat-themes">0</div>
+          <div class="s-lbl">Themes Available</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div style="background:var(--panel);border-radius:var(--radius);padding:20px">
+          <div class="section-title">Recent Tracks</div>
+          <div id="recent-tracks"><div style="color:var(--sub);font-size:13px">No tracks yet — upload some!</div></div>
+        </div>
+        <div style="background:var(--panel);border-radius:var(--radius);padding:20px">
+          <div class="section-title">System Info</div>
+          <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+            <div class="flex-row"><span style="color:var(--sub)">Engine</span><span class="ml-auto">Project Sound v2.0</span></div>
+            <div class="flex-row"><span style="color:var(--sub)">Formats</span><span class="ml-auto">FLAC · DSD · MP3 · MQA · WAV · AAC · OGG</span></div>
+            <div class="flex-row"><span style="color:var(--sub)">AI Tagger</span><span class="ml-auto" style="color:var(--accent)">● Active</span></div>
+            <div class="flex-row"><span style="color:var(--sub)">Noise Filter</span><span class="ml-auto" style="color:var(--accent)">● Active</span></div>
+            <div class="flex-row"><span style="color:var(--sub)">Platform</span><span class="ml-auto">Win · macOS · Android · iOS</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── LIBRARY ────────────────────────────────────────────────────────── -->
+    <div class="page" id="page-library">
+      <div class="upload-zone" id="upload-zone"
+           ondragover="event.preventDefault();this.classList.add('dragover')"
+           ondragleave="this.classList.remove('dragover')"
+           ondrop="handleDrop(event)"
+           onclick="document.getElementById('file-input').click()">
+        <div class="up-icon">📂</div>
+        <p><strong>Drop audio files here</strong> or click to browse</p>
+        <p style="margin-top:4px">Supports: FLAC · DSD · MP3 · MQA · WAV · AAC · OGG · Opus</p>
+        <input type="file" id="file-input" multiple accept=".mp3,.flac,.wav,.ogg,.m4a,.aac,.opus"
+               style="display:none" onchange="uploadFiles(this.files)">
+      </div>
+      <div class="flex-row" style="margin-bottom:14px">
+        <div class="section-title" style="margin-bottom:0">Library</div>
+        <span id="lib-count" class="badge ml-auto">0 tracks</span>
+        <button class="btn sm secondary" onclick="loadLibrary()">↺ Refresh</button>
+      </div>
+      <table class="track-table" id="track-table">
+        <thead><tr>
+          <th class="num">#</th>
+          <th>Title</th>
+          <th>Artist</th>
+          <th>Format</th>
+          <th>Duration</th>
+          <th>Tags</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="track-body">
+          <tr><td colspan="7"><div class="empty-state">
+            <div class="e-icon">🎵</div>
+            <div>Your library is empty — upload some tracks!</div>
+          </div></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── NOW PLAYING ────────────────────────────────────────────────────── -->
+    <div class="page" id="page-player">
+      <div style="display:grid;grid-template-columns:300px 1fr;gap:24px">
+        <div>
+          <div style="background:var(--panel);border-radius:16px;padding:24px;text-align:center;margin-bottom:16px">
+            <div style="font-size:80px;margin-bottom:16px" id="np-art">🎵</div>
+            <div style="font-size:18px;font-weight:700;margin-bottom:4px" id="np-title">No track selected</div>
+            <div style="color:var(--sub);font-size:14px" id="np-artist">—</div>
+            <div style="color:var(--sub);font-size:12px;margin-top:4px" id="np-album">—</div>
+          </div>
+          <div style="background:var(--panel);border-radius:var(--radius);padding:16px">
+            <div class="section-title">Track Info</div>
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:12px" id="np-info">
+              <div class="flex-row"><span style="color:var(--sub)">Format</span><span class="ml-auto format-badge" id="info-format">—</span></div>
+              <div class="flex-row"><span style="color:var(--sub)">Bitrate</span><span class="ml-auto" id="info-bitrate">—</span></div>
+              <div class="flex-row"><span style="color:var(--sub)">Sample Rate</span><span class="ml-auto" id="info-sr">—</span></div>
+              <div class="flex-row"><span style="color:var(--sub)">Channels</span><span class="ml-auto" id="info-ch">—</span></div>
+              <div class="flex-row"><span style="color:var(--sub)">Duration</span><span class="ml-auto" id="info-dur">—</span></div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="section-title">Waveform</div>
+          <div class="waveform-wrap">
+            <canvas id="waveform-canvas" height="100"></canvas>
+            <div class="wf-playhead" id="wf-playhead" style="left:0"></div>
+          </div>
+          <div class="section-title" style="margin-top:20px">Spectrum Analyser</div>
+          <canvas id="spectrum-canvas" height="160"></canvas>
+          <div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap" id="np-tags"></div>
+        </div>
+      </div>
+      <!-- audio element (hidden, controlled by JS) -->
+      <audio id="audio-el" style="display:none"></audio>
+    </div>
+
+    <!-- ── METADATA EDITOR ────────────────────────────────────────────────── -->
+    <div class="page" id="page-metadata">
+      <div class="flex-row" style="margin-bottom:20px">
+        <select class="styled" id="meta-select" onchange="loadMeta(this.value)">
+          <option value="">— Select a track —</option>
+        </select>
+        <button class="btn sm" onclick="autoTagSelected()">🧠 AI Auto-Tag</button>
+        <button class="btn sm secondary" onclick="saveMetaForm()">💾 Save Changes</button>
+      </div>
+      <div id="meta-preview" class="meta-preview" style="display:none">
+        <div class="meta-art">🎵</div>
+        <div>
+          <div style="font-size:18px;font-weight:700" id="mp-title">—</div>
+          <div style="color:var(--sub)" id="mp-artist">—</div>
+          <div style="color:var(--sub);font-size:12px" id="mp-album">—</div>
+          <div style="margin-top:8px" id="mp-tags"></div>
+        </div>
+      </div>
+      <div class="meta-grid" id="meta-form">
+        <div class="field-group"><label>Title</label><input id="mf-title" placeholder="Track title"></div>
+        <div class="field-group"><label>Artist</label><input id="mf-artist" placeholder="Artist name"></div>
+        <div class="field-group"><label>Album</label><input id="mf-album" placeholder="Album name"></div>
+        <div class="field-group"><label>Genre</label><input id="mf-genre" placeholder="e.g. Jazz, Rock"></div>
+        <div class="field-group"><label>Year</label><input id="mf-year" placeholder="2024"></div>
+        <div class="field-group"><label>Track #</label><input id="mf-track" placeholder="1"></div>
+      </div>
+      <div class="field-group" style="margin-top:12px">
+        <label>Auto-Generated Tags</label>
+        <div id="mf-tags" style="padding:10px;background:var(--panel);border-radius:6px;min-height:36px"></div>
+      </div>
+    </div>
+
+    <!-- ── EQUALIZER ──────────────────────────────────────────────────────── -->
+    <div class="page" id="page-equalizer">
+      <div class="eq-container">
+        <div>
+          <div class="flex-row" style="margin-bottom:16px">
+            <div class="section-title" style="margin-bottom:0">Presets</div>
+            <button class="btn sm secondary" onclick="resetEQ()">Reset</button>
+          </div>
+          <div class="eq-presets" id="eq-presets">
+            <button class="preset-btn active" onclick="applyPreset('flat',this)">Flat</button>
+            <button class="preset-btn" onclick="applyPreset('bass',this)">Bass Boost</button>
+            <button class="preset-btn" onclick="applyPreset('treble',this)">Treble Boost</button>
+            <button class="preset-btn" onclick="applyPreset('vocal',this)">Vocal</button>
+            <button class="preset-btn" onclick="applyPreset('jazz',this)">Jazz</button>
+            <button class="preset-btn" onclick="applyPreset('rock',this)">Rock</button>
+            <button class="preset-btn" onclick="applyPreset('classical',this)">Classical</button>
+            <button class="preset-btn" onclick="applyPreset('lounge',this)">Lounge</button>
+          </div>
+        </div>
+        <div>
+          <div class="section-title">10-Band Equalizer</div>
+          <div class="eq-bands" id="eq-bands"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div style="background:var(--panel);border-radius:var(--radius);padding:20px">
+            <div class="section-title">Compressor</div>
+            <div id="comp-params"></div>
+          </div>
+          <div style="background:var(--panel);border-radius:var(--radius);padding:20px">
+            <div class="section-title">Reverb</div>
+            <div id="reverb-params"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PLUGINS ────────────────────────────────────────────────────────── -->
+    <div class="page" id="page-plugins">
+      <div class="plugin-grid" id="plugin-grid"></div>
+    </div>
+
+    <!-- ── THEMES ─────────────────────────────────────────────────────────── -->
+    <div class="page" id="page-themes">
+      <div class="section-title">Available Themes</div>
+      <div class="theme-grid" id="theme-grid"></div>
+      <div class="divider"></div>
+      <div class="section-title">Custom Theme Builder</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:700px">
+        <div class="field-group"><label>Name</label><input id="ct-name" placeholder="My Theme"></div>
+        <div class="field-group"><label>Background</label><input type="color" id="ct-bg" value="#121212"></div>
+        <div class="field-group"><label>Surface</label><input type="color" id="ct-surface" value="#1E1E1E"></div>
+        <div class="field-group"><label>Accent</label><input type="color" id="ct-accent" value="#1DB954"></div>
+        <div class="field-group"><label>Text</label><input type="color" id="ct-text" value="#FFFFFF"></div>
+        <div class="field-group"><label>Subtext</label><input type="color" id="ct-sub" value="#B3B3B3"></div>
+      </div>
+      <button class="btn" style="margin-top:16px" onclick="saveCustomTheme()">💾 Save & Apply Theme</button>
+    </div>
+
+    <!-- ── BUILD CONSOLE ──────────────────────────────────────────────────── -->
+    <div class="page" id="page-build">
+      <div class="build-grid">
+        <div class="build-card">
+          <h3>🖥️ Windows EXE</h3>
+          <p>Build standalone Windows executable using PyInstaller</p>
+          <button class="btn" onclick="runBuild('exe')">Build EXE</button>
+        </div>
+        <div class="build-card">
+          <h3>🤖 Android APK</h3>
+          <p>Build Android APK via Buildozer / Kivy pipeline</p>
+          <button class="btn" onclick="runBuild('apk')">Build APK</button>
+        </div>
+        <div class="build-card">
+          <h3>🍎 macOS Bundle</h3>
+          <p>Build macOS .app bundle via py2app</p>
+          <button class="btn" onclick="runBuild('mac')">Build .app</button>
+        </div>
+        <div class="build-card">
+          <h3>📱 iOS IPA</h3>
+          <p>Build iOS IPA via Kivy-iOS (requires macOS)</p>
+          <button class="btn" onclick="runBuild('ios')">Build IPA</button>
+        </div>
+      </div>
+      <div class="flex-row" style="margin-bottom:8px">
+        <div class="section-title" style="margin-bottom:0">Build Console</div>
+        <button class="btn sm secondary ml-auto" onclick="document.getElementById('console').innerHTML=''">Clear</button>
+        <button class="btn sm" onclick="runBuild('all')">🚀 Build All</button>
+      </div>
+      <div class="console-output" id="console">
+        <div class="log info"><span class="log-time">00:00:00</span>Project Sound Admin Console ready.</div>
+        <div class="log info"><span class="log-time">00:00:00</span>Select a build target above to begin.</div>
+      </div>
+    </div>
+
+    <!-- ── ROADMAP ────────────────────────────────────────────────────────── -->
+    <div class="page" id="page-roadmap">
+      <div style="max-width:700px">
+        <div class="section-title">Project Sound – Full Roadmap</div>
+        <div id="roadmap-list"></div>
+      </div>
+    </div>
+
+  </div><!-- /pages -->
+
+  <!-- player bar -->
+  <div id="playerbar">
+    <div class="pb-art" id="pb-art">🎵</div>
+    <div class="pb-info">
+      <div class="title" id="pb-title">No track playing</div>
+      <div class="artist" id="pb-artist">—</div>
+    </div>
+    <div class="pb-controls">
+      <button title="Previous" onclick="prevTrack()">⏮</button>
+      <button class="play-btn" id="play-btn" onclick="togglePlay()">▶</button>
+      <button title="Next" onclick="nextTrack()">⏭</button>
+      <button title="Shuffle" id="shuffle-btn" onclick="toggleShuffle()" style="font-size:14px;color:var(--sub)">🔀</button>
+      <button title="Repeat"  id="repeat-btn"  onclick="toggleRepeat()"  style="font-size:14px;color:var(--sub)">🔁</button>
+    </div>
+    <div class="pb-timeline">
+      <span class="time" id="pb-elapsed">0:00</span>
+      <div class="pb-seek" id="pb-seek" onclick="seekTo(event)">
+        <div class="pb-seek-fill" id="pb-fill" style="width:0%"></div>
+      </div>
+      <span class="time" id="pb-dur">0:00</span>
+    </div>
+    <div class="pb-vol">
+      <span class="vol-icon" onclick="toggleMute()">🔊</span>
+      <input type="range" class="vol-slider" min="0" max="1" step="0.01" value="0.8"
+             id="vol-slider" oninput="setVolume(this.value)">
+    </div>
+  </div>
+</div>
+
+<!-- toast container -->
+<div id="toast-container"></div>
+
+<!-- ═══════════════════════════════════ JS ════════════════════════════════ -->
+<script>
+/* ────────────────────────────────────────────────────────────────────────
+   STATE
+──────────────────────────────────────────────────────────────────────── */
+let library = [];
+let plugins = [];
+let themes  = [];
+let currentTrack = null;
+let currentIdx   = -1;
+let shuffle = false;
+let repeat  = false;
+let audioCtx, analyser, srcNode, animFrame;
+
+const audio = document.getElementById('audio-el');
+
+const EQ_BANDS = ['32Hz','64Hz','125Hz','250Hz','500Hz','1kHz','2kHz','4kHz','8kHz','16kHz'];
+const EQ_KEYS  = ['32hz','64hz','125hz','250hz','500hz','1khz','2khz','4khz','8khz','16khz'];
+let eqValues = Object.fromEntries(EQ_KEYS.map(k=>[k,0]));
+
+const PRESETS = {
+  flat:      [0,0,0,0,0,0,0,0,0,0],
+  bass:      [8,7,5,3,1,0,0,0,0,0],
+  treble:    [0,0,0,0,0,2,4,6,7,8],
+  vocal:     [-2,-2,0,3,5,5,3,0,-2,-2],
+  jazz:      [4,3,1,2,-1,-1,0,1,2,3],
+  rock:      [5,4,3,1,0,-1,0,3,4,5],
+  classical: [4,3,2,1,0,-1,-1,0,2,3],
+  lounge:    [3,2,1,0,-1,-1,0,1,2,3],
+};
+
+const ROADMAP_ITEMS = [
+  {phase:"1",title:"Player Engine",desc:"FLAC, DSD, MP3, MQA support with bit-perfect playback",done:true},
+  {phase:"2",title:"AI Tagging",desc:"AI-powered metadata, genre detection, album art fetch",done:true},
+  {phase:"3",title:"Waveform Editor",desc:"Visual waveform editing, karaoke track muting, EQ",done:true},
+  {phase:"4",title:"Admin Console",desc:"Build/export pipeline, AI control centre, plugin manager",done:true},
+  {phase:"5",title:"Cross-Platform",desc:"Windows EXE, macOS .app, Android APK, iOS IPA builds",done:false},
+  {phase:"6",title:"Plugins & Themes",desc:"Plugin SDK, theme marketplace, legal/licensing framework",done:false},
+];
+
+/* ────────────────────────────────────────────────────────────────────────
+   INIT
+──────────────────────────────────────────────────────────────────────── */
+window.addEventListener('DOMContentLoaded', () => {
+  loadLibrary();
+  loadPlugins();
+  loadThemes();
+  buildEQ();
+  buildRoadmap();
+  setupAudioEvents();
+  setInterval(updatePlayerBar, 500);
+});
+
+/* ────────────────────────────────────────────────────────────────────────
+   NAVIGATION
+──────────────────────────────────────────────────────────────────────── */
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  const titles = {
+    dashboard:'Dashboard', library:'Library', player:'Now Playing',
+    metadata:'Metadata Editor', equalizer:'EQ & Effects', plugins:'Plugins',
+    themes:'Themes', build:'Build Console', roadmap:'Roadmap'
+  };
+  document.getElementById('page-title').textContent = titles[id] || id;
+  if (id === 'player') drawWaveform();
+  if (id === 'plugins') renderPlugins();
+  if (id === 'themes') renderThemes();
+  if (id === 'metadata') populateMetaSelect();
+  return false;
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   LIBRARY
+──────────────────────────────────────────────────────────────────────── */
+async function loadLibrary() {
+  const res  = await fetch('/api/library');
+  const data = await res.json();
+  library = data.tracks;
+  renderLibrary();
+  updateDashboard();
+}
+
+function renderLibrary() {
+  const tbody = document.getElementById('track-body');
+  const count = document.getElementById('lib-count');
+  count.textContent = library.length + ' tracks';
+
+  if (!library.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
+      <div class="e-icon">🎵</div><div>No tracks yet — upload some!</div></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = library.map((t, i) => `
+    <tr>
+      <td class="num">${i+1}</td>
+      <td><div class="track-title">${esc(t.title)}</div>
+          <div class="track-meta">${esc(t.album)}</div></td>
+      <td class="track-meta">${esc(t.artist)}</td>
+      <td><span class="format-badge">${t.format}</span></td>
+      <td class="track-dur">${fmtDur(t.duration)}</td>
+      <td>${(t.tags||[]).slice(0,3).map(g=>`<span class="tag-pill">${g}</span>`).join('')}</td>
+      <td>
+        <div class="actions-col">
+          <button class="btn sm" onclick="playTrack(${i})">▶</button>
+          <button class="btn sm secondary" onclick="editMeta('${t.filename}')">✏️</button>
+          <button class="btn sm danger" onclick="deleteTrack('${t.filename}')">🗑</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+async function uploadFiles(files) {
+  if (!files.length) return;
+  toast('Uploading ' + files.length + ' file(s)…');
+  const fd = new FormData();
+  for (const f of files) fd.append('files', f);
+  const res  = await fetch('/api/library/upload', {method:'POST', body:fd});
+  const data = await res.json();
+  toast(`✅ Uploaded ${data.count} track(s)`, 'ok');
+  loadLibrary();
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('dragover');
+  uploadFiles(e.dataTransfer.files);
+}
+
+async function deleteTrack(filename) {
+  if (!confirm(`Delete "${filename}"?`)) return;
+  await fetch('/api/library/delete/' + encodeURIComponent(filename), {method:'DELETE'});
+  toast('Track deleted');
+  loadLibrary();
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   PLAYER
+──────────────────────────────────────────────────────────────────────── */
+function playTrack(idx) {
+  if (idx < 0 || idx >= library.length) return;
+  currentIdx   = idx;
+  currentTrack = library[idx];
+  audio.src    = currentTrack.url;
+  audio.volume = parseFloat(document.getElementById('vol-slider').value);
+  audio.play();
+  setupWebAudio();
+  updateNowPlaying();
+  toast('▶ Now playing: ' + currentTrack.title);
+  showPage('player', document.querySelector('nav a:nth-child(3)'));
+}
+
+function togglePlay() {
+  if (!currentTrack) {
+    if (library.length) playTrack(0);
+    return;
+  }
+  audio.paused ? audio.play() : audio.pause();
+}
+
+function prevTrack() {
+  if (currentIdx > 0) playTrack(currentIdx - 1);
+}
+function nextTrack() {
+  if (currentIdx < library.length - 1) playTrack(currentIdx + 1);
+  else if (repeat) playTrack(0);
+}
+function toggleShuffle() {
+  shuffle = !shuffle;
+  document.getElementById('shuffle-btn').style.color = shuffle ? 'var(--accent)' : 'var(--sub)';
+}
+function toggleRepeat() {
+  repeat = !repeat;
+  document.getElementById('repeat-btn').style.color = repeat ? 'var(--accent)' : 'var(--sub)';
+}
+function setVolume(v) {
+  audio.volume = parseFloat(v);
+  audio.muted  = false;
+}
+function toggleMute() {
+  audio.muted = !audio.muted;
+}
+function seekTo(e) {
+  const bar = document.getElementById('pb-seek');
+  const pct = e.offsetX / bar.offsetWidth;
+  if (audio.duration) audio.currentTime = pct * audio.duration;
+}
+function updatePlayerBar() {
+  const btn  = document.getElementById('play-btn');
+  btn.textContent = audio.paused ? '▶' : '⏸';
+  if (!audio.duration) return;
+  const pct  = (audio.currentTime / audio.duration) * 100;
+  document.getElementById('pb-fill').style.width    = pct + '%';
+  document.getElementById('pb-elapsed').textContent = fmtDur(audio.currentTime);
+  document.getElementById('pb-dur').textContent     = fmtDur(audio.duration);
+  // waveform playhead
+  document.getElementById('wf-playhead').style.left = pct + '%';
+}
+function setupAudioEvents() {
+  audio.addEventListener('ended', () => {
+    if (shuffle) playTrack(Math.floor(Math.random()*library.length));
+    else nextTrack();
+  });
+}
+function updateNowPlaying() {
+  const t = currentTrack;
+  if (!t) return;
+  // player page
+  document.getElementById('np-title').textContent  = t.title;
+  document.getElementById('np-artist').textContent = t.artist;
+  document.getElementById('np-album').textContent  = t.album;
+  document.getElementById('info-format').textContent  = t.format;
+  document.getElementById('info-bitrate').textContent = t.bitrate ? t.bitrate+'kbps' : '—';
+  document.getElementById('info-sr').textContent      = t.samplerate ? t.samplerate/1000+'kHz' : '—';
+  document.getElementById('info-ch').textContent      = t.channels === 1 ? 'Mono' : 'Stereo';
+  document.getElementById('info-dur').textContent     = fmtDur(t.duration);
+  // tags
+  const tagsEl = document.getElementById('np-tags');
+  tagsEl.innerHTML = (t.tags||[]).map(g=>`<span class="tag-pill">${g}</span>`).join('');
+  // player bar
+  document.getElementById('pb-title').textContent  = t.title;
+  document.getElementById('pb-artist').textContent = t.artist;
+  // waveform
+  drawWaveform();
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   WEB AUDIO / SPECTRUM
+──────────────────────────────────────────────────────────────────────── */
+function setupWebAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser  = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    srcNode = audioCtx.createMediaElementSource(audio);
+    srcNode.connect(analyser);
+    analyser.connect(audioCtx.destination);
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  startSpectrum();
+}
+
+function startSpectrum() {
+  cancelAnimationFrame(animFrame);
+  const canvas  = document.getElementById('spectrum-canvas');
+  const ctx     = canvas.getContext('2d');
+  const bufLen  = analyser.frequencyBinCount;
+  const dataArr = new Uint8Array(bufLen);
+
+  function draw() {
+    animFrame = requestAnimationFrame(draw);
+    canvas.width  = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    analyser.getByteFrequencyData(dataArr);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const barW = canvas.width / bufLen * 2.5;
+    let x = 0;
+    for (let i = 0; i < bufLen; i++) {
+      const barH = (dataArr[i] / 255) * canvas.height;
+      const hue  = (i / bufLen) * 240;
+      ctx.fillStyle = `hsl(${hue},80%,55%)`;
+      ctx.fillRect(x, canvas.height - barH, barW - 1, barH);
+      x += barW;
+    }
+  }
+  draw();
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   WAVEFORM CANVAS
+──────────────────────────────────────────────────────────────────────── */
+async function drawWaveform() {
+  const canvas = document.getElementById('waveform-canvas');
+  if (!canvas || !currentTrack) return;
+  canvas.width  = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+  const ctx = canvas.getContext('2d');
+
+  // fetch peaks from server
+  let peaks;
+  try {
+    const res  = await fetch('/api/waveform/' + encodeURIComponent(currentTrack.filename));
+    const data = await res.json();
+    peaks = data.peaks;
+  } catch { peaks = null; }
+
+  if (!peaks || !peaks.length) {
+    ctx.fillStyle = '#444';
+    ctx.fillRect(0, canvas.height/2 - 1, canvas.width, 2);
+    return;
+  }
+
+  const w = canvas.width, h = canvas.height;
+  const barW = Math.max(1, w / peaks.length - 1);
+  ctx.clearRect(0, 0, w, h);
+
+  peaks.forEach((amp, i) => {
+    const barH = amp * (h * 0.45);
+    const x    = i * (w / peaks.length);
+    const cy   = h / 2;
+    // gradient per bar
+    const g = ctx.createLinearGradient(0, cy - barH, 0, cy + barH);
+    g.addColorStop(0,   'rgba(29,185,84,0.9)');
+    g.addColorStop(0.5, 'rgba(29,185,84,0.6)');
+    g.addColorStop(1,   'rgba(29,185,84,0.9)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x, cy - barH, barW, barH * 2);
+  });
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   METADATA EDITOR
+──────────────────────────────────────────────────────────────────────── */
+function populateMetaSelect() {
+  const sel = document.getElementById('meta-select');
+  sel.innerHTML = '<option value="">— Select a track —</option>' +
+    library.map(t => `<option value="${t.filename}">${esc(t.title)} – ${esc(t.artist)}</option>`).join('');
+}
+
+async function loadMeta(filename) {
+  if (!filename) return;
+  const res  = await fetch('/api/meta/' + encodeURIComponent(filename));
+  const meta = await res.json();
+
+  document.getElementById('mf-title').value  = meta.title  || '';
+  document.getElementById('mf-artist').value = meta.artist || '';
+  document.getElementById('mf-album').value  = meta.album  || '';
+  document.getElementById('mf-genre').value  = meta.genre  || '';
+  document.getElementById('mf-year').value   = meta.year   || '';
+
+  document.getElementById('mp-title').textContent  = meta.title  || '—';
+  document.getElementById('mp-artist').textContent = meta.artist || '—';
+  document.getElementById('mp-album').textContent  = meta.album  || '—';
+  document.getElementById('meta-preview').style.display = 'flex';
+
+  const tagsEl = document.getElementById('mp-tags');
+  tagsEl.innerHTML = (meta.tags||[]).map(g=>`<span class="tag-pill">${g}</span>`).join('');
+  const mfTags = document.getElementById('mf-tags');
+  mfTags.innerHTML = (meta.tags||[]).map(g=>`<span class="tag-pill">${g}</span>`).join('');
+}
+
+async function saveMetaForm() {
+  const sel = document.getElementById('meta-select');
+  if (!sel.value) { toast('Select a track first','warn'); return; }
+  const data = {
+    title:  document.getElementById('mf-title').value,
+    artist: document.getElementById('mf-artist').value,
+    album:  document.getElementById('mf-album').value,
+    genre:  document.getElementById('mf-genre').value,
+    date:   document.getElementById('mf-year').value,
+  };
+  const res  = await fetch('/api/meta/' + encodeURIComponent(sel.value),
+                           {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  const result = await res.json();
+  if (result.saved) { toast('✅ Metadata saved!'); loadLibrary(); }
+  else toast('⚠️ ' + (result.reason||'Save failed'), 'warn');
+}
+
+async function autoTagSelected() {
+  const sel = document.getElementById('meta-select');
+  if (!sel.value) { toast('Select a track first','warn'); return; }
+  const res  = await fetch('/api/tag/auto/' + encodeURIComponent(sel.value), {method:'POST'});
+  const data = await res.json();
+  const mfTags = document.getElementById('mf-tags');
+  mfTags.innerHTML = (data.tags||[]).map(g=>`<span class="tag-pill">${g}</span>`).join('');
+  toast('🧠 AI tagging complete! Tags: ' + data.tags.join(', '));
+}
+
+function editMeta(filename) {
+  showPage('metadata', document.querySelector('nav a:nth-child(4)'));
+  setTimeout(()=>{
+    const sel = document.getElementById('meta-select');
+    sel.value = filename;
+    loadMeta(filename);
+  }, 100);
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   EQUALIZER
+──────────────────────────────────────────────────────────────────────── */
+function buildEQ() {
+  const container = document.getElementById('eq-bands');
+  container.innerHTML = EQ_BANDS.map((label, i) => `
+    <div class="eq-band">
+      <div class="val" id="eq-val-${i}">0 dB</div>
+      <input type="range" class="eq-slider" min="-12" max="12" step="0.5" value="0"
+             oninput="updateBand(${i},this.value)">
+      <label>${label}</label>
+    </div>`).join('');
+
+  // Compressor
+  document.getElementById('comp-params').innerHTML = `
+    <div class="plugin-params">${buildParam('Threshold','-24','dB',-60,0)}
+    ${buildParam('Ratio','4',':1',1,20)}${buildParam('Attack','3','ms',0.1,100)}
+    ${buildParam('Release','250','ms',10,1000)}</div>`;
+
+  // Reverb
+  document.getElementById('reverb-params').innerHTML = `
+    <div class="plugin-params">${buildParam('Room Size','0.5','',0,1)}
+    ${buildParam('Damping','0.4','',0,1)}${buildParam('Wet','0.3','',0,1)}</div>`;
+}
+
+function buildParam(label, val, unit, min, max) {
+  return `<div class="param-row">
+    <label>${label}</label>
+    <input type="range" min="${min}" max="${max}" step="${(max-min)/100}" value="${val}"
+           oninput="this.nextElementSibling.textContent=parseFloat(this.value).toFixed(1)+'${unit}'">
+    <span class="pv">${val}${unit}</span>
+  </div>`;
+}
+
+function updateBand(i, v) {
+  eqValues[EQ_KEYS[i]] = parseFloat(v);
+  document.getElementById('eq-val-' + i).textContent = (v > 0 ? '+' : '') + parseFloat(v).toFixed(1) + ' dB';
+}
+
+function applyPreset(name, btn) {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const vals = PRESETS[name] || PRESETS.flat;
+  document.querySelectorAll('.eq-slider').forEach((s, i) => {
+    s.value = vals[i];
+    updateBand(i, vals[i]);
+  });
+  toast('EQ preset: ' + name);
+}
+
+function resetEQ() {
+  applyPreset('flat', document.querySelector('.preset-btn'));
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   PLUGINS
+──────────────────────────────────────────────────────────────────────── */
+async function loadPlugins() {
+  const res  = await fetch('/api/plugins');
+  const data = await res.json();
+  plugins = data.plugins;
+  document.getElementById('stat-plugins').textContent = plugins.length;
+}
+
+function renderPlugins() {
+  const grid = document.getElementById('plugin-grid');
+  grid.innerHTML = plugins.map(p => `
+    <div class="plugin-card ${p.enabled?'enabled':''}" id="pc-${p.name}">
+      <div class="plugin-header">
+        <span class="plugin-icon">${p.icon||'🔌'}</span>
+        <div>
+          <div class="plugin-name">${esc(p.label)}</div>
+        </div>
+        <div class="ml-auto">
+          <label class="toggle">
+            <input type="checkbox" ${p.enabled?'checked':''} onchange="togglePlugin('${p.name}',this)">
+            <span class="slider-tog"></span>
+          </label>
+        </div>
+      </div>
+      <div class="plugin-desc">${esc(p.description)}</div>
+      <div class="plugin-params">${renderParams(p)}</div>
+      <button class="btn sm" onclick="applyPlugin('${p.name}')">Apply</button>
+    </div>`).join('');
+}
+
+function renderParams(p) {
+  return Object.entries(p.params).map(([k,v]) => `
+    <div class="param-row">
+      <label>${k.replace(/_/g,' ')}</label>
+      <input type="range" min="${guessMin(k,v)}" max="${guessMax(k,v)}"
+             step="${guessStep(k,v)}" value="${v}"
+             id="pp-${p.name}-${k}"
+             oninput="document.getElementById('pv-${p.name}-${k}').textContent=parseFloat(this.value).toFixed(2)">
+      <span class="pv" id="pv-${p.name}-${k}">${typeof v==='number'?v.toFixed(2):v}</span>
+    </div>`).join('');
+}
+
+function guessMin(k,v){ return k.includes('hz')||k.includes('Hz')?20:k.includes('db')||k.includes('threshold')?-60:0 }
+function guessMax(k,v){ return k.includes('hz')&&v>100?20000:k.includes('ratio')?20:k.includes('bands')?128:1 }
+function guessStep(k,v){ return typeof v==='number'&&v>10?1:0.01 }
+
+async function togglePlugin(name, cb) {
+  const res  = await fetch('/api/plugins/'+name+'/toggle', {method:'POST'});
+  const data = await res.json();
+  const card = document.getElementById('pc-' + name);
+  if (data.enabled) card.classList.add('enabled'); else card.classList.remove('enabled');
+  const p = plugins.find(x=>x.name===name);
+  if (p) p.enabled = data.enabled;
+  toast(data.message);
+}
+
+async function applyPlugin(name) {
+  const p      = plugins.find(x=>x.name===name);
+  if (!p) return;
+  const params = {};
+  Object.keys(p.params).forEach(k => {
+    const el = document.getElementById('pp-' + name + '-' + k);
+    if (el) params[k] = parseFloat(el.value);
+  });
+  const res  = await fetch('/api/plugins/'+name+'/apply',
+                           {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(params)});
+  const data = await res.json();
+  toast(data.message);
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   THEMES
+──────────────────────────────────────────────────────────────────────── */
+async function loadThemes() {
+  const res  = await fetch('/api/themes');
+  const data = await res.json();
+  themes = data.themes;
+  document.getElementById('stat-themes').textContent = themes.length;
+}
+
+function renderThemes() {
+  const grid = document.getElementById('theme-grid');
+  grid.innerHTML = themes.map(t => `
+    <div class="theme-card" style="background:${t.background};border-color:${t.key==='default'?'var(--accent)':'transparent'}"
+         onclick="applyTheme('${t.key}',this)">
+      <div class="theme-preview" style="background:${t.panel}">
+        <div style="display:flex;gap:6px">
+          <div style="width:12px;height:12px;border-radius:50%;background:${t.accent}"></div>
+          <div style="width:40px;height:6px;border-radius:3px;background:${t.text};margin-top:3px;opacity:.7"></div>
+        </div>
+      </div>
+      <div class="theme-footer" style="background:${t.surface}">
+        <span class="name" style="color:${t.text}">${t.name||t.key}</span>
+        <div class="theme-dot" style="background:${t.accent}"></div>
+      </div>
+    </div>`).join('');
+}
+
+function applyTheme(key, card) {
+  const t = themes.find(x=>x.key===key);
+  if (!t) return;
+  const root = document.documentElement;
+  root.style.setProperty('--bg',      t.background);
+  root.style.setProperty('--surface', t.surface);
+  root.style.setProperty('--panel',   t.panel);
+  root.style.setProperty('--text',    t.text);
+  root.style.setProperty('--sub',     t.subtext);
+  root.style.setProperty('--accent',  t.accent);
+  root.style.setProperty('--accent2', t.accent2||t.accent);
+  document.querySelectorAll('.theme-card').forEach(c=>c.style.borderColor='transparent');
+  if (card) card.style.borderColor = t.accent;
+  toast('🎨 Theme applied: ' + (t.name||key));
+}
+
+async function saveCustomTheme() {
+  const data = {
+    key:        document.getElementById('ct-name').value.toLowerCase().replace(/\s+/g,'_') || 'custom',
+    name:       document.getElementById('ct-name').value || 'Custom',
+    background: document.getElementById('ct-bg').value,
+    surface:    document.getElementById('ct-surface').value,
+    panel:      document.getElementById('ct-surface').value,
+    accent:     document.getElementById('ct-accent').value,
+    accent2:    document.getElementById('ct-accent').value,
+    text:       document.getElementById('ct-text').value,
+    subtext:    document.getElementById('ct-sub').value,
+  };
+  const res = await fetch('/api/themes',
+                          {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  const result = await res.json();
+  await loadThemes();
+  renderThemes();
+  toast('💾 Custom theme saved!');
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   BUILD CONSOLE
+──────────────────────────────────────────────────────────────────────── */
+async function runBuild(target) {
+  const con = document.getElementById('console');
+  clog(`🚀 Starting build: ${target.toUpperCase()}…`, 'info');
+
+  const res  = await fetch('/api/build/' + target, {method:'POST'});
+  const data = await res.json();
+
+  if (data.logs) {
+    for (const line of data.logs) {
+      await delay(80 + Math.random()*120);
+      const cls = line.startsWith('✅') ? 'ok' : line.startsWith('❌') ? 'error' : 'info';
+      clog(line, cls);
+    }
+  }
+  clog('Build finished: ' + target, 'ok');
+  toast(`✅ Build complete: ${target.toUpperCase()}`);
+}
+
+function clog(msg, cls='info') {
+  const con = document.getElementById('console');
+  const now = new Date();
+  const ts  = [now.getHours(),now.getMinutes(),now.getSeconds()]
+               .map(x=>String(x).padStart(2,'0')).join(':');
+  const div = document.createElement('div');
+  div.className = 'log ' + cls;
+  div.innerHTML = `<span class="log-time">${ts}</span>${esc(msg)}`;
+  con.appendChild(div);
+  con.scrollTop = con.scrollHeight;
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   ROADMAP
+──────────────────────────────────────────────────────────────────────── */
+function buildRoadmap() {
+  document.getElementById('roadmap-list').innerHTML = ROADMAP_ITEMS.map(r => `
+    <div style="display:flex;gap:16px;padding:16px;background:var(--panel);border-radius:var(--radius);
+                margin-bottom:10px;border-left:3px solid ${r.done?'var(--accent)':'#555'}">
+      <div style="font-size:22px;width:32px;text-align:center">${r.done?'✅':'⏳'}</div>
+      <div>
+        <div style="font-weight:700;margin-bottom:4px">Phase ${r.phase}: ${r.title}</div>
+        <div style="color:var(--sub);font-size:13px">${r.desc}</div>
+      </div>
+      <div class="ml-auto"><span class="badge" style="background:${r.done?'var(--accent)':'#555'};color:${r.done?'#000':'var(--sub)'}">${r.done?'Done':'Planned'}</span></div>
+    </div>`).join('');
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   DASHBOARD
+──────────────────────────────────────────────────────────────────────── */
+function updateDashboard() {
+  document.getElementById('stat-tracks').textContent  = library.length;
+  document.getElementById('stat-formats').textContent = 7;
+  // recent tracks
+  const rc = document.getElementById('recent-tracks');
+  if (!library.length) {
+    rc.innerHTML = '<div style="color:var(--sub);font-size:13px">No tracks yet — upload some!</div>';
+    return;
+  }
+  rc.innerHTML = library.slice(0,5).map((t,i) => `
+    <div class="flex-row" style="padding:8px 0;border-bottom:1px solid #333;cursor:pointer"
+         onclick="playTrack(${i})">
+      <span style="color:var(--sub);font-size:12px;width:20px">${i+1}</span>
+      <div style="flex:1"><div style="font-size:13px;font-weight:500">${esc(t.title)}</div>
+        <div style="color:var(--sub);font-size:11px">${esc(t.artist)}</div></div>
+      <span class="format-badge">${t.format}</span>
+    </div>`).join('');
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   TOASTS & HELPERS
+──────────────────────────────────────────────────────────────────────── */
+function toast(msg, type='') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(()=>el.style.opacity='0', 3000);
+  setTimeout(()=>el.remove(), 3400);
+}
+
+function fmtDur(s) {
+  if (!s) return '0:00';
+  const m = Math.floor(s/60), sec = Math.floor(s%60);
+  return m + ':' + String(sec).padStart(2,'0');
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function delay(ms) { return new Promise(r=>setTimeout(r,ms)); }
+</script>
+</body>
+</html>
